@@ -29,6 +29,7 @@
 *.out
 *.app
 
+.gdb_history
 .vscode
 .VSCodeCounter
 **/cmake-build-debug
@@ -53,4 +54,3 @@ build/**/*
 
 lib/*
 bin/*
-test/test_runner

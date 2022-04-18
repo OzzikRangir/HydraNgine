@@ -12,27 +12,37 @@ namespace hydra {
             std::list<ManagedProperty*> m_properties;
             Entity* m_parent;
             std::list<Entity*> m_children;
-            std::list<EntityTrait*> m_traits;
+            std::list<Trait*> m_traits;
 
         public:
-            inline Entity(std::list<ManagedProperty*> properties, Entity* parent = nullptr) : m_properties{properties}, m_parent{parent}, ManagedObject(){};
-            inline auto addTrait(EntityTrait* trait) & -> void { m_traits.push_back(trait); };
+            inline Entity(std::list<ManagedProperty*> properties,
+                          Entity* parent = nullptr) : m_properties{properties},
+                                                      m_parent{parent},
+                                                      ManagedObject()
+            {
+                if (m_parent) m_parent->m_children.push_back(this);
+            };
+            ~Entity() override
+            {
+                if (m_parent) m_parent->m_children.remove(this);
+            };
+            inline auto addTrait(Trait* trait) & -> void { m_traits.push_back(trait); };
             template <typename T>
-            inline auto trait() & -> T*
+            inline auto trait() & -> T&
             {
                 for (auto trait : m_traits) {
                     try {
                         T* ptr = dynamic_cast<T*>(trait);
                         if (ptr)
-                            return ptr;
+                            return *ptr;
                     }
                     catch (const std::bad_cast& e) {
                     }
                 }
-                return nullptr;
+                throw std::range_error("TRAIT NOT FOUND");
             }
             virtual inline auto properties() -> std::list<ManagedProperty*>& { return m_properties; };
-            inline auto type() & -> const Type override { return Type::Entity; };
+            inline auto type() & -> const ObjectType override { return ObjectType::Entity; };
 
             virtual auto dump() & -> std::string override;
         };

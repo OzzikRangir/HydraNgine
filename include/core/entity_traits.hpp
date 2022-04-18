@@ -8,11 +8,12 @@
 #include "core/uuid.hpp"
 namespace hydra {
     namespace base {
-        class EntityTrait :  public virtual ManagedObject {
+        class Trait : public virtual ManagedObject {
         public:
-            enum class TraitType {
+            enum class Type {
                 Undefined,
                 Transform,
+                Camera,
                 Mesh
             };
 
@@ -20,29 +21,56 @@ namespace hydra {
             std::list<ManagedProperty*> m_properties;
 
         public:
-            inline EntityTrait(std::list<ManagedProperty*> properties) : m_properties{properties} {};
-            ~EntityTrait() {}
-            virtual inline auto properties() -> std::list<ManagedProperty*>& { return m_properties; };
-            virtual inline TraitType traitType() { return TraitType::Undefined; };
-            inline auto type() & -> const Type override { return Type::Trait; };
+            inline Trait(std::list<ManagedProperty*> properties) : m_properties{properties} {};
+            ~Trait() {}
+            virtual inline auto properties() & -> std::list<ManagedProperty*>& { return m_properties; };
+            inline auto operator[](const char* name) & -> ManagedProperty&
+            {
+                for (auto& prop : m_properties) {
+                    if (prop->name() == std::string(name))
+                        return *prop;
+                }
+                throw std::range_error("PROPERTY NOT FOUND");
+            };
+
+            inline auto operator[](const std::string& name) & -> ManagedProperty&
+            {
+                for (auto& prop : m_properties) {
+                    if (prop->name() == name)
+                        return *prop;
+                }
+                throw std::range_error("PROPERTY NOT FOUND");
+            };
+            virtual inline auto traitType() & -> Trait::Type { return Type::Undefined; };
+            inline auto type() & -> const ObjectType override { return ObjectType::Trait; };
+            inline static auto TypeEnum() -> Type { return Type::Undefined; };
 
             virtual auto dump() & -> std::string override;
         };
 
-        class EntityTraitTransform : public virtual EntityTrait {
+        class TraitTransform : public virtual Trait {
         public:
-            EntityTraitTransform(std::list<ManagedProperty*> properties) : EntityTrait(properties){};
-            inline TraitType traitType() override { return TraitType::Transform; };
+            TraitTransform(std::list<ManagedProperty*> properties) : Trait{properties} {};
+            inline auto traitType() & -> Type override { return Type::Transform; };
+            inline static auto TypeEnum() -> Type { return Type::Transform; };
         };
 
-        class EntityTraitMesh : public virtual EntityTrait {
+        class TraitMesh : public virtual Trait {
         private:
             Resource m_resource;
 
         public:
             inline auto resource() & -> Resource& { return m_resource; };
-            EntityTraitMesh(std::list<ManagedProperty*> properties = {}) : EntityTrait(properties){};
-            inline TraitType traitType() override { return TraitType::Mesh; };
+            TraitMesh(std::list<ManagedProperty*> properties = {}) : Trait{properties} {};
+            inline auto traitType() & -> Type override { return Type::Mesh; };
+            inline static auto TypeEnum() -> Type { return Type::Mesh; };
+        };
+
+        class TraitCamera : public virtual Trait {
+        public:
+            TraitCamera(std::list<ManagedProperty*> properties = {}) : Trait{properties} {};
+            inline auto traitType() & -> Type override { return Type::Camera; };
+            inline static auto TypeEnum() -> Type { return Type::Camera; };
         };
 
     }  // namespace base

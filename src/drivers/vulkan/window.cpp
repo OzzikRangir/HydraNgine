@@ -167,6 +167,7 @@ namespace hydra {
                 frame->commandBuffer.reset();
 
                 vk::AcquireNextImageInfoKHR acqImgInfo{};
+                acqImgInfo.swapchain = **m_windowData.swapchain;
 
                 acqImgInfo.semaphore = *frame->presentSemaphore;
                 acqImgInfo.timeout = umax;

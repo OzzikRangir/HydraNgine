@@ -24,7 +24,7 @@ namespace hydra {
             return std::move(str);
         };
 
-        auto EntityTrait::dump() & -> std::string
+        auto Trait::dump() & -> std::string
         {
             std::string str = "TRAIT: " + uuids::to_string(m_id) + "\n\tPROPERTIES:\n";
             for (auto* property : m_properties) {
