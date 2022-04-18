@@ -16,7 +16,7 @@ namespace hydra {
                 Extension
             };
             Asset() : ManagedObject(){};
-            inline auto type() & -> const Type override { return Type::Asset; };
+            inline auto type() & -> const ObjectType override { return ObjectType::Asset; };
             virtual inline auto assetType() & -> const AssetType { return AssetType::Undefined; };
             virtual auto dump() & -> std::string override;
         };

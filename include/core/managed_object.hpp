@@ -4,15 +4,17 @@
 #include "core/uuid.hpp"
 namespace hydra {
     namespace base {
-        class ManagedObject {
-        public:
-            enum class Type {
+            enum class ObjectType {
                 Undefined,
                 Asset,
                 Entity,
                 Trait,
                 External
             };
+
+        class ManagedObject {
+        public:
+
 
         protected:
             const UUID m_id;
@@ -21,7 +23,7 @@ namespace hydra {
         public:
             virtual inline ~ManagedObject(){};
 
-            constexpr virtual inline auto type() & -> const Type { return Type::Undefined; };
+            constexpr virtual inline auto type() & -> const ObjectType { return ObjectType::Undefined; };
             constexpr virtual inline auto id() & -> const UUID & { return m_id; };
             virtual auto dump() & -> std::string;
 

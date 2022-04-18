@@ -1,5 +1,6 @@
 #ifndef _HYDRA_NGINE_CORE_MANAGED_PROPERTY_HPP
 #define _HYDRA_NGINE_CORE_MANAGED_PROPERTY_HPP
+#include <iostream>
 
 #include "commons.hpp"
 #include "core/managed_object.hpp"
@@ -64,7 +65,7 @@ namespace hydra {
             PropertyTypedData(T&& data) : m_uniquePtr{std::make_unique<T>(data)},
                                           PropertyData{sizeof(T),
                                                        std::type_index(typeid(T))} { m_rawPtr = m_uniquePtr.get(); };
-            // PropertyTypedData(const PropertyData& data) : m_uniquePtr
+
             inline auto set(T&& data) & -> void
             {
                 m_uniquePtr = {std::make_unique<T>(data)};
@@ -97,7 +98,7 @@ namespace hydra {
                 return PropertyType::Error;
             }
         };
-        class PropertyArchetype {
+        class PropertyTag {
         protected:
             const std::string m_name;
             const std::type_index m_typeId;
@@ -106,40 +107,30 @@ namespace hydra {
 
         public:
             template <typename T>
-            inline PropertyArchetype(std::string&& name,
-                                     T&& defaultValue) : m_name{name},
-                                                         m_typeId{typeid(T)},
-                                                         m_type{
-                                                             PropertyTypeEnum<T>()},
-                                                         m_defaultValue{std::unique_ptr<PropertyData>(new PropertyTypedData<T>(defaultValue))} {};
-            PropertyArchetype(PropertyArchetype&& othr) : m_name{othr.m_name}, m_typeId{othr.m_typeId}, m_type{othr.m_type}, m_defaultValue{othr.defaultClone()} {};
-            PropertyArchetype(const PropertyArchetype& othr) : m_name{othr.m_name}, m_typeId{othr.m_typeId}, m_type{othr.m_type}, m_defaultValue{othr.defaultClone()} {};
+            inline PropertyTag(std::string&& name,
+                               T&& defaultValue) : m_name{name},
+                                                   m_typeId{typeid(T)},
+                                                   m_type{
+                                                       PropertyTypeEnum<T>()},
+                                                   m_defaultValue{std::unique_ptr<PropertyData>(new PropertyTypedData<T>(defaultValue))} {};
+            PropertyTag(PropertyTag&& othr) : m_name{othr.m_name}, m_typeId{othr.m_typeId}, m_type{othr.m_type}, m_defaultValue{othr.cloneDefaultData()} {};
+            PropertyTag(const PropertyTag& othr) : m_name{othr.m_name}, m_typeId{othr.m_typeId}, m_type{othr.m_type}, m_defaultValue{othr.cloneDefaultData()} {};
             constexpr inline auto name() & -> const std::string& { return m_name; };
             constexpr inline auto type() & -> const PropertyType& { return m_type; };
             constexpr inline auto typeId() & -> const std::type_index& { return m_typeId; };
-            constexpr inline auto operator==(const PropertyArchetype& other) & -> bool { return m_name == other.m_name && m_typeId == other.m_typeId && m_type == other.m_type; }
-            inline auto defaultClone() & -> PropertyData* { return m_defaultValue->clone(); };
-            inline auto defaultClone() const& -> PropertyData* { return m_defaultValue->clone(); };
-
-            // inline auto defaultValuePtr() & -> const T* { return *m_defaultValue; };
+            constexpr inline auto operator==(const PropertyTag& other) & -> bool { return m_name == other.m_name && m_typeId == other.m_typeId && m_type == other.m_type; }
+            inline auto cloneDefaultData() & -> PropertyData* { return m_defaultValue->clone(); };
+            inline auto cloneDefaultData() const& -> PropertyData* { return m_defaultValue->clone(); };
         };
 
         class UnmanagedProperty {
         protected:
-            PropertyArchetype* m_archetype;
+            PropertyTag* m_archetype;
             std::unique_ptr<PropertyData> m_data;
 
         public:
-            inline UnmanagedProperty(PropertyArchetype* archetype) : m_archetype{archetype},
-                                                                     m_data{archetype->defaultClone()} {};
-            // constexpr UnmanagedProperty(std::string&& name, T&& value) : m_typeName{TypeName(std::move(name), typeid(T))},
-            //                                                              m_type{TypeEnum<T>()},
-            //                                                              m_data{std::unique_ptr<Data>(new TypedData<T>(value))} {};
-            // template <typename T>
-            // constexpr UnmanagedProperty(const char* name, T&& value) : m_id{uuid::Generator::next()},
-            //                                                            m_typeName{TypeName({name}, typeid(T))},
-            //                                                            m_type{TypeEnum<T>()},
-            //                                                            m_data{std::unique_ptr<Data>(new TypedData<T>(value))} {};
+            inline UnmanagedProperty(PropertyTag* archetype) : m_archetype{archetype},
+                                                               m_data{archetype->cloneDefaultData()} {};
             constexpr inline auto name() & -> const std::string& { return m_archetype->name(); }
             constexpr inline auto size() & -> const size_t& { return m_data->typeSize(); };
             constexpr inline auto data() & -> const PropertyData& { return *m_data; }
@@ -161,23 +152,23 @@ namespace hydra {
                 //             throw std::exception();
             };
         };
+        using Archetype = std::vector<PropertyTag>;
 
         class ManagedProperty : public virtual UnmanagedProperty {
         private:
             const UUID m_id;
 
         public:
-            inline ManagedProperty(PropertyArchetype* archetype) : m_id{uuid::Generator::next()}, UnmanagedProperty{archetype} {};
+            inline ManagedProperty(PropertyTag* archetype) : m_id{uuid::Generator::next()}, UnmanagedProperty{archetype} {};
             inline auto id() & -> const UUID& { return m_id; };
         };
-        using TraitArchetype = std::vector<PropertyArchetype>;
 
-        class PackedPropertyArray {
+        class PackedPropertyVector {
         private:
             std::vector<uint8_t> m_data;
 
         public:
-            PackedPropertyArray(std::initializer_list<PackedPropertyCreateInfo> initilizerList)
+            PackedPropertyVector(std::initializer_list<PackedPropertyCreateInfo> initilizerList)
             {
                 size_t dataAllocSize = 0;
                 for (auto& ppCI : initilizerList) {
@@ -196,7 +187,7 @@ namespace hydra {
 
                     std::copy(reinterpret_cast<uint8_t*>(dataPtr), reinterpret_cast<uint8_t*>(dataPtr) + propertySize, std::back_inserter(tempData));
                     for (int i = tempData.size(); i < paddingCount * paddingSize; i++) {
-                        m_data.push_back(0);
+                        tempData.push_back(0);
                     }
 
                     m_data.insert(m_data.end(), tempData.begin(), tempData.end());
