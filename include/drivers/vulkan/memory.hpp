@@ -16,11 +16,17 @@ namespace hydra {
             private:
                 std::unique_ptr<vk::raii::Buffer> m_buffer;
                 std::unique_ptr<vk::raii::DeviceMemory> m_memory;
+                vk::DeviceSize m_size;
 
             public:
-                inline auto buffer() & -> vk::Buffer { return **m_buffer; };
-                inline auto memory() & -> vk::DeviceMemory { return **m_memory; };
-                AllocatedBuffer(vk::raii::Buffer&& buffer, vk::raii::DeviceMemory&& memory) : m_buffer{std::make_unique<vk::raii::Buffer>(std::forward<vk::raii::Buffer>(buffer))}, m_memory{std::make_unique<vk::raii::DeviceMemory>(std::forward<vk::raii::DeviceMemory>(memory))} {};
+                inline auto buffer() & -> const vk::Buffer& { return **m_buffer; };
+                inline auto memory() & -> const vk::DeviceMemory& { return **m_memory; };
+                inline auto size() & -> const vk::DeviceSize& { return m_size; };
+                AllocatedBuffer(vk::raii::Buffer&& buffer,
+                                vk::raii::DeviceMemory&& memory,
+                                vk::DeviceSize size) : m_buffer{std::make_unique<vk::raii::Buffer>(std::forward<vk::raii::Buffer>(buffer))},
+                                                       m_memory{std::make_unique<vk::raii::DeviceMemory>(std::forward<vk::raii::DeviceMemory>(memory))},
+                                                       m_size{size} {};
             };
 
             class AllocatedImage {
@@ -49,8 +55,10 @@ namespace hydra {
                 BasicData* m_basicDataPtr;
 
             public:
-                inline MemoryAllocator(BasicData* basicDataPtr) : m_basicDataPtr(basicDataPtr) {};
+                inline MemoryAllocator(BasicData* basicDataPtr) : m_basicDataPtr(basicDataPtr){};
                 AllocatedImage allocateImage(vk::ImageCreateInfo imageCreateInfo, vk::ImageViewCreateInfo imageViewCreateInfo, vk::MemoryPropertyFlags memflags = vk::MemoryPropertyFlagBits::eDeviceLocal);
+                AllocatedBuffer allocateBuffer(vk::BufferCreateInfo bufferCreateInfo, vk::MemoryPropertyFlags memflags = vk::MemoryPropertyFlagBits::eDeviceLocal);
+
                 ~MemoryAllocator(){};
             };
 

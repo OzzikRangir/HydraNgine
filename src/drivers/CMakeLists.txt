@@ -1,6 +1,7 @@
 add_library(hydra_vulkan SHARED vulkan/memory.cpp 
                                 vulkan/descriptors.cpp 
                                 vulkan/window.cpp 
+                                vulkan/shaders.cpp 
                                 vulkan/commands.cpp 
                                 vulkan.cpp)
 add_library(hydra_glfw SHARED glfw.cpp)

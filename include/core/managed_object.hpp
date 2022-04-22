@@ -28,7 +28,7 @@ namespace hydra {
             virtual auto dump() & -> std::string;
 
             template <typename T>
-            inline auto as() & -> T * { return dynamic_cast<T *>(this); };
+            inline auto as() & -> T& { return dynamic_cast<T&>(*this); };
         };
     }  // namespace base
 }  // namespace hydra

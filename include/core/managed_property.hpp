@@ -118,7 +118,7 @@ namespace hydra {
             constexpr inline auto name() & -> const std::string& { return m_name; };
             constexpr inline auto type() & -> const PropertyType& { return m_type; };
             constexpr inline auto typeId() & -> const std::type_index& { return m_typeId; };
-            constexpr inline auto operator==(const PropertyTag& other) & -> bool { return m_name == other.m_name && m_typeId == other.m_typeId && m_type == other.m_type; }
+            inline auto operator==(const PropertyTag& other) & -> bool { return m_name == other.m_name && m_typeId == other.m_typeId && m_type == other.m_type; }
             inline auto cloneDefaultData() & -> PropertyData* { return m_defaultValue->clone(); };
             inline auto cloneDefaultData() const& -> PropertyData* { return m_defaultValue->clone(); };
         };
@@ -132,8 +132,8 @@ namespace hydra {
             inline UnmanagedProperty(PropertyTag* archetype) : m_archetype{archetype},
                                                                m_data{archetype->cloneDefaultData()} {};
             constexpr inline auto name() & -> const std::string& { return m_archetype->name(); }
-            constexpr inline auto size() & -> const size_t& { return m_data->typeSize(); };
-            constexpr inline auto data() & -> const PropertyData& { return *m_data; }
+            inline auto size() & -> const size_t& { return m_data->typeSize(); };
+            inline auto data() & -> const PropertyData& { return *m_data; }
             template <typename T>
             inline auto get() & -> T { return {m_data->typed<T>().get()}; };
             template <typename T>
