@@ -1,8 +1,8 @@
 #ifndef _HYDRA_NGINE_CORE_ASSETS_HPP
 #define _HYDRA_NGINE_CORE_ASSETS_HPP
 #include "commons.hpp"
-#include "core/resources.hpp"
 #include "core/managed_object.hpp"
+#include "core/resources.hpp"
 namespace hydra {
     namespace base {
         class Asset : public virtual ManagedObject {
@@ -23,17 +23,17 @@ namespace hydra {
 
         class Material : public virtual Asset {
         public:
-            struct Shader {
-                Resource data;
+            struct StageData {
                 Resource descriptor;
+                Resource code;
             };
 
         private:
-            std::list<Shader> m_shaders;
+            std::list<StageData> m_stages;
 
         public:
             Material() : Asset(){};
-            inline auto shaders() & -> std::list<Shader>& { return m_shaders; };
+            inline auto stages() & -> std::list<StageData>& { return m_stages; };
             inline auto assetType() & -> const AssetType override { return Asset::AssetType::Material; };
             virtual auto dump() & -> std::string override;
         };

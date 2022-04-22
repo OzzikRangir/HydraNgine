@@ -14,23 +14,31 @@ namespace hydra {
             class MemoryAllocator;
             class DescriptorAllocator;
             class CommandBufferAllocator;
+            class ShaderManager;
             class AllocatedImage;
             class CommandBufferData;
+            class ShaderModule;
             struct BasicData {
                 std::unique_ptr<vk::raii::Context> context;
                 std::unique_ptr<vk::raii::Instance> instance;
                 std::unique_ptr<vk::raii::Device> device;
                 std::unique_ptr<vk::raii::PhysicalDevice> physicalDevice;
+                std::unique_ptr<vk::raii::PipelineCache> pipelineCache;
                 std::unique_ptr<vk::raii::DebugUtilsMessengerEXT> debugMessenger;
                 std::unique_ptr<vk::raii::Queue> graphicsQueue;
 
                 std::unique_ptr<DescriptorAllocator> descriptorAllocator;
                 std::unique_ptr<CommandBufferAllocator> commandBufferAllocator;
                 std::unique_ptr<MemoryAllocator> memoryAllocator;
+                std::unique_ptr<ShaderManager> shaderAllocator;
                 // std::unique_ptr<MaterialManager> memoryAllocator;
                 uint32_t apiVersion;
                 uint32_t graphicsQueueIndex;
                 uint32_t bufferedFrames = {2};
+            };
+
+            struct ShadersData {
+                std::vector<ShaderModule> m_shaders;
             };
 
             struct WindowData {

@@ -79,13 +79,24 @@ namespace hydra {
             m_basicData.graphicsQueue = std::make_unique<vk::raii::Queue>(*m_basicData.device, graphics_queue_ret.value());
 
             vk::PipelineCacheCreateInfo pipelineCacheInfo{};
-            m_pipelineCache = std::make_unique<vk::raii::PipelineCache>(*m_basicData.device, pipelineCacheInfo);
+            m_basicData.pipelineCache = std::make_unique<vk::raii::PipelineCache>(*m_basicData.device, pipelineCacheInfo);
             m_basicData.memoryAllocator = std::make_unique<vlkn::MemoryAllocator>(&m_basicData);
             m_basicData.descriptorAllocator = std::make_unique<vlkn::DescriptorAllocator>(&m_basicData);
 
             m_basicData.commandBufferAllocator = std::make_unique<vlkn::CommandBufferAllocator>(&m_basicData);
+            m_basicData.shaderAllocator = std::make_unique<vlkn::ShaderManager>(&m_basicData);
 
             m_window = std::make_unique<vlkn::Window>(&m_basicData, surface, vk::Extent2D(window.width(), window.height()));
+
+            for (auto& material : materials) {
+                for (auto& stage : material->stages()) {
+                    if (stage.descriptor.data().size() == 0) { throw std::logic_error("EMPTY SHADER DESCRIPTION"); }
+                    auto descriptor = JSON::parse(stage.descriptor.data());
+                    auto name = descriptor["name"];
+                    m_basicData.shaderAllocator->createShaderModule(name.get<std::string>(), stage.code.copy<uint32_t>());
+                }
+                
+            }
 
             return true;
         }

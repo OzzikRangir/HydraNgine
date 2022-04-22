@@ -4,10 +4,11 @@
 namespace hydra {
     namespace drivers {
         namespace vlkn {
-            auto DescriptorSetLayoutData::createLayout() & -> vk::raii::DescriptorSetLayout*{
+            auto DescriptorSetLayoutData::createLayout() & -> vk::raii::DescriptorSetLayout*
+            {
                 vk::DescriptorSetLayoutCreateInfo dslCI{};
-                std::vector<vk::DescriptorSetLayoutBinding> bindings; 
-                for(auto& binding : m_bindings){
+                std::vector<vk::DescriptorSetLayoutBinding> bindings;
+                for (auto& binding : m_bindings) {
                     bindings.push_back(binding.binding);
                 }
                 dslCI.bindingCount = bindings.size();
@@ -15,7 +16,7 @@ namespace hydra {
                 m_layout = std::make_unique<vk::raii::DescriptorSetLayout>(m_basicDataPtr->device->createDescriptorSetLayout(dslCI));
                 return m_layout.get();
             }
-            auto DescriptorAllocator::allocateDescriptorSet(DescriptorSetLayoutData&& layout) & -> vk::raii::DescriptorSet&&
+            auto DescriptorAllocator::allocateDescriptorSet(DescriptorSetLayoutData&& layout) & -> vk::raii::DescriptorSet
             {
                 DescriptorSetLayoutData* currLayout = nullptr;
                 for (auto& dsld : m_descriptorData.layoutCache) {
@@ -46,7 +47,7 @@ namespace hydra {
                 if (descriptorSets.size() == 0) {
                     throw std::runtime_error("DescriptorSetAllocateError");
                 }
-                return std::move(descriptorSets[0]);
+                return {std::move(descriptorSets.back())};
 
                 // vk::DescriptorSetLayoutBinding setbind{};
                 // setbind.binding = 0;
@@ -54,7 +55,7 @@ namespace hydra {
                 // setbind.descriptorType = type;
                 // setbind.stageFlags = flags;
 
-                // 
+                //
             }
 
             DescriptorAllocator::DescriptorAllocator(BasicData* basicDataPtr) : m_basicDataPtr(basicDataPtr)
@@ -113,6 +114,43 @@ namespace hydra {
                 std::sort(m_bindings.begin(), m_bindings.end(), [](DescriptorBinding& a, DescriptorBinding& b) {
                     return a.binding.binding < b.binding.binding;
                 });
+                return *this;
+            }
+            DescriptorSetLayoutData& DescriptorSetLayoutData::bindBuffer(AllocatedBuffer* buffer, DescriptorBindingInfo bindingInfo, vk::DeviceSize bufferOffset, uint32_t binding)
+            {
+                if (!~binding) {
+                    binding = m_bindings.size();
+                }
+
+                DescriptorBinding newBinding{};
+
+                vk::DescriptorBufferInfo bufferInfo;
+                bufferInfo.buffer = buffer->buffer();
+                bufferInfo.offset = bufferOffset;
+                bufferInfo.range =  buffer->size();
+
+                vk::DescriptorSetLayoutBinding bindingStruct{};
+                bindingStruct.descriptorCount = 1;
+                bindingStruct.descriptorType = bindingInfo.type;
+                bindingStruct.stageFlags = bindingInfo.stageFlags;
+                bindingStruct.binding = binding;
+
+                vk::WriteDescriptorSet newWrite{};
+                newWrite.descriptorCount = 1;
+                newWrite.descriptorType = bindingInfo.type;
+                newWrite.pBufferInfo = &bufferInfo;
+                newWrite.dstBinding = binding;
+
+                newBinding.binding = bindingStruct;
+                newBinding.info = bindingInfo;
+                newBinding.type = DescriptorBindingType::Buffer;
+                newBinding.writeSet = newWrite;
+
+                // m_bindings.push_back(newBinding);
+
+                // std::sort(m_bindings.begin(), m_bindings.end(), [](DescriptorBinding& a, DescriptorBinding& b) {
+                //     return a.binding.binding < b.binding.binding;
+                // });
                 return *this;
             }
 

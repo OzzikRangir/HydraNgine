@@ -13,20 +13,24 @@ namespace hydra {
 
         protected:
             Data m_data;
-            std::string m_path;
 
         public:
             Resource(){};
+            Resource(const std::vector<uint8_t>& bytes) : m_data{bytes, 0} {};
             template <typename T>
-            inline auto copy(uint64_t accessTick = 0) & -> std::vector<T>&&
+            inline auto copy(uint64_t accessTick = 0) & -> std::vector<T>
             {
                 m_data.lastAccess = accessTick;
-                size_t paddedLength;
-                size_t chunks = m_data.bytes.size() / sizeof(T);
-                std::vector<T> data{chunks};
-                if (m_data.bytes.size() % chunks > 0) chunks++;
-                for (size_t i = 0; i < chunks; i++)
-                    data.push_back(*reinterpret_cast<T*>(&m_data.bytes.data()[chunks * sizeof(T)]));
+                size_t pad = sizeof(T);
+                size_t newSize = m_data.bytes.size() / sizeof(T);
+                if (m_data.bytes.size() % newSize > 0) {
+                    newSize++;
+                }
+                std::vector<T> data;
+                data.reserve(newSize);
+                std::vector<uint8_t> bytes = {m_data.bytes};
+                for (int i = bytes.size(); i < newSize * sizeof(T); i++) bytes.push_back(0);
+                for (int i = 0; i < newSize; i++) data.push_back(*reinterpret_cast<T*>(&bytes[i * sizeof(T)]));
                 return std::move(data);
             };
 
@@ -35,7 +39,6 @@ namespace hydra {
                 m_data.lastAccess = accessTick;
                 return m_data.bytes;
             };
-            // inline std::vector<uint8_t>& load(uint64_t accessTick = 0) {}
             template <typename T>
             inline void store(std::vector<T>&& data, uint64_t accessTick = 0)
             {

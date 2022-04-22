@@ -27,6 +27,7 @@ namespace hydra {
 
                 vk::WriteDescriptorSet writeSet;
                 vk::DescriptorSetLayoutBinding binding;
+                vk::DeviceSize offset = 0;
                 Pointer pointer;
                 DescriptorBindingInfo info;
                 DescriptorBindingType type;
@@ -37,9 +38,10 @@ namespace hydra {
 
             class DescriptorSetLayoutData {
             private:
+                BasicData* m_basicDataPtr;
                 std::vector<DescriptorBinding> m_bindings;
                 std::unique_ptr<vk::raii::DescriptorSetLayout> m_layout;
-                BasicData* m_basicDataPtr;
+
                 auto createLayout() & -> vk::raii::DescriptorSetLayout*;
 
             public:
@@ -71,7 +73,7 @@ namespace hydra {
                         return *createLayout();
                 };
                 DescriptorSetLayoutData& bindImage(AllocatedImage* image, DescriptorBindingInfo bindingInfo, uint32_t binding = ~0);
-                DescriptorSetLayoutData& bindBuffer(AllocatedBuffer* buffer, DescriptorBindingInfo bindingInfo, uint32_t binding = ~0);
+                DescriptorSetLayoutData& bindBuffer(AllocatedBuffer* buffer, DescriptorBindingInfo bindingInfo, vk::DeviceSize bufferOffset = 0, uint32_t binding = ~0);
             };
 
             struct DescriptorsData {
@@ -105,7 +107,7 @@ namespace hydra {
 
             public:
                 // auto allocateDescriptorSet(vk::DescriptorType type, vk::ShaderStageFlags flags) & -> vk::raii::DescriptorSet&&;
-                auto allocateDescriptorSet(DescriptorSetLayoutData&& layout) & -> vk::raii::DescriptorSet&&;
+                auto allocateDescriptorSet(DescriptorSetLayoutData&& layout) & -> vk::raii::DescriptorSet;
 
                 DescriptorAllocator(BasicData* basicDataPtr);
                 ~DescriptorAllocator(){};
